@@ -6,6 +6,8 @@ If you run more than one CLI coding agent — **Claude Code, Codex, Gemini CLI, 
 
 Everything runs on your machine: **no accounts, no servers, no network calls.** It reads your own local files and never sends anything out.
 
+![agent-summa — one searchable library across all your AI coding agents, with a transcript viewer](docs/images/sessions.png)
+
 ---
 
 ## Features
@@ -15,6 +17,24 @@ Everything runs on your machine: **no accounts, no servers, no network calls.** 
 - **Skills** — a skill × agent install matrix. Distribute one skill to every agent that's missing it (symlink + a manifest for clean removal), install/remove per agent, or fully uninstall.
 - **Agents** — a per-agent config view: install status, version, home dir, session & skill counts, and that agent's **global instruction file**.
 - **Memory** — converge each project's cross-agent instruction files (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `QWEN.md` …) onto one source of truth via symlink — *write once, every agent reads it* — and browse each agent's learned-fact store (read-only).
+
+## Screenshots
+
+**Cross-agent full-text search** — one query across every agent's history, tagged by where it matched (prompt / title / content).
+
+![Cross-agent search with match-type tags](docs/images/search.png)
+
+**Skills × agent matrix** — see which agents have each skill, then distribute / install / remove with one click.
+
+![Skill-by-agent install matrix](docs/images/skills.png)
+
+**Per-agent config** — install status, session & skill counts, and each agent's global instruction file.
+
+![Per-agent configuration view](docs/images/agents.png)
+
+**Project memory** — converge each project's cross-agent instruction files onto one source, and browse the learned-fact store.
+
+![Project memory: instruction-file matrix and learned facts](docs/images/memory.png)
 
 ## Principles
 
