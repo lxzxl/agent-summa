@@ -1,0 +1,13 @@
+packages:
+  - core
+  - app
+
+onlyBuiltDependencies:
+  - better-sqlite3
+  - esbuild
+  - electron
+  - "@electron/rebuild"
+
+# This project deliberately tracks latest-stable (see docs/STACK.md), which collides with a
+# global minimumReleaseAge cooldown. Disable the cooldown for this workspace only.
+minimumReleaseAge: 0

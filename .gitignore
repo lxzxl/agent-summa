@@ -1,0 +1,43 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+out/
+dist/
+*.tsbuildinfo
+
+# native build artifacts
+build/
+prebuilds/
+*.node
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# local index / app data (also lives in the OS userData dir, never the repo)
+*.db
+*.db-wal
+*.db-shm
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# test / coverage
+coverage/
+
+# internal-only artifacts (kept locally, not part of the public repo):
+# prior-art research notes + the UI design prototype / design-tool sidecar
+docs/PRIOR-ART.md
+designs/

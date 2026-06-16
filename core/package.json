@@ -1,0 +1,25 @@
+{
+  "name": "@agent-summa/core",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Framework-agnostic core for agent-summa: provider adapters, session index, scanner.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "scan": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.9"
+  }
+}

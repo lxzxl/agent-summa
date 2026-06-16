@@ -1,0 +1,21 @@
+{
+  "name": "agent-summa",
+  "private": true,
+  "description": "Local-first desktop app that unifies the sessions, skills, and memory of your AI coding agents (Claude Code, Codex, Gemini, Qwen, OpenCode, Cursor) into one searchable place.",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/lxzxl/agent-summa.git" },
+  "packageManager": "pnpm@10.25.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "scan": "pnpm --filter @agent-summa/core scan",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "oxlint core/src app/src",
+    "test": "pnpm --filter @agent-summa/core test"
+  },
+  "devDependencies": {
+    "oxlint": "^1.70.0"
+  }
+}
