@@ -32,6 +32,40 @@ html, body, #root { height: 100%; }
   --sel:#1D1626;
 }
 
+/* ── Light themes ─────────────────────────────────────────────────────────────
+   Light themes also override --info/--warn (dark-tuned in :root) and the --hl-*
+   syntax palette, so chips and code blocks stay legible on a light background. */
+[data-theme="github-light"] {
+  --bg:#ffffff; --panel:#f6f8fa; --panel-2:#eaeef2; --inset:#f6f8fa;
+  --border:#d1d9e0; --border-strong:#afb8c1;
+  --text:#1f2328; --dim:#59636e; --mute:#818b98;
+  --accent:#0969da; --accent-text:#0550ae; --accent-soft:rgba(9,105,218,.10);
+  --sel:#ddf4ff;
+  --info-soft:rgba(9,105,218,.12); --info-text:#0550ae;
+  --warn-soft:rgba(154,103,0,.14); --warn-text:#7d4e00;
+  --hl-keyword:#cf222e; --hl-string:#0a3069; --hl-number:#0550ae; --hl-title:#8250df; --hl-builtin:#953800; --hl-attr:#0550ae; --hl-tag:#116329;
+}
+[data-theme="solarized-light"] {
+  --bg:#fdf6e3; --panel:#eee8d5; --panel-2:#e3dcc4; --inset:#eee8d5;
+  --border:#ddd6c1; --border-strong:#c8c0a6;
+  --text:#073642; --dim:#586e75; --mute:#657b83;
+  --accent:#268bd2; --accent-text:#1a6fae; --accent-soft:rgba(38,139,210,.13);
+  --sel:#e9e2cd;
+  --info-soft:rgba(38,139,210,.14); --info-text:#1a6fae;
+  --warn-soft:rgba(181,137,0,.16); --warn-text:#8a6d00;
+  --hl-keyword:#859900; --hl-string:#2aa198; --hl-number:#d33682; --hl-title:#268bd2; --hl-builtin:#b58900; --hl-attr:#6c71c4; --hl-tag:#cb4b16;
+}
+[data-theme="catppuccin-latte"] {
+  --bg:#eff1f5; --panel:#e6e9ef; --panel-2:#dce0e8; --inset:#e6e9ef;
+  --border:#ccd0da; --border-strong:#bcc0cc;
+  --text:#4c4f69; --dim:#5c5f77; --mute:#8c8fa1;
+  --accent:#1e66f5; --accent-text:#1357c9; --accent-soft:rgba(30,102,245,.12);
+  --sel:#dce0e8;
+  --info-soft:rgba(30,102,245,.13); --info-text:#1357c9;
+  --warn-soft:rgba(223,142,29,.16); --warn-text:#bb5a00;
+  --hl-keyword:#8839ef; --hl-string:#40a02b; --hl-number:#fe640b; --hl-title:#1e66f5; --hl-builtin:#df8e1d; --hl-attr:#ea76cb; --hl-tag:#d20f39;
+}
+
 :root {
   --ui: -apple-system, "Segoe UI Variable", "Segoe UI", "PingFang SC", system-ui, sans-serif;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, monospace;
@@ -39,6 +73,8 @@ html, body, #root { height: 100%; }
   --titlefont: var(--mono); --radius: 5px; --glow: none;
   --info-soft:rgba(77,163,255,.15); --info-text:#9CC9FF;
   --warn-soft:rgba(240,178,62,.15); --warn-text:#F0C97A;
+  /* syntax-highlight palette — dark default (Tokyo-Night); light themes override these */
+  --hl-keyword:#7AA2F7; --hl-string:#9ECE6A; --hl-number:#FF9E64; --hl-title:#7DCFFF; --hl-builtin:#E0AF68; --hl-attr:#BB9AF7; --hl-tag:#F7768E;
 }
 body { background: var(--bg); color: var(--text); font-family: var(--ui); -webkit-font-smoothing: antialiased; overflow: hidden; }
 button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
@@ -171,13 +207,13 @@ body.dragging { cursor: col-resize; user-select: none; }
 
 /* highlight.js tokens (rehype-highlight) — fixed palette, readable on all dark themes */
 .md .hljs-comment, .md .hljs-quote { color: var(--mute); font-style: italic; }
-.md .hljs-keyword, .md .hljs-selector-tag, .md .hljs-literal, .md .hljs-section { color: #7AA2F7; }
-.md .hljs-string, .md .hljs-regexp, .md .hljs-addition, .md .hljs-meta-string { color: #9ECE6A; }
-.md .hljs-number, .md .hljs-symbol, .md .hljs-bullet { color: #FF9E64; }
-.md .hljs-title, .md .hljs-title.function_, .md .hljs-function .hljs-title { color: #7DCFFF; }
-.md .hljs-built_in, .md .hljs-class .hljs-title, .md .hljs-title.class_, .md .hljs-type { color: #E0AF68; }
-.md .hljs-attr, .md .hljs-attribute, .md .hljs-property, .md .hljs-variable, .md .hljs-template-variable { color: #BB9AF7; }
-.md .hljs-tag, .md .hljs-name, .md .hljs-selector-id, .md .hljs-selector-class, .md .hljs-deletion { color: #F7768E; }
+.md .hljs-keyword, .md .hljs-selector-tag, .md .hljs-literal, .md .hljs-section { color: var(--hl-keyword); }
+.md .hljs-string, .md .hljs-regexp, .md .hljs-addition, .md .hljs-meta-string { color: var(--hl-string); }
+.md .hljs-number, .md .hljs-symbol, .md .hljs-bullet { color: var(--hl-number); }
+.md .hljs-title, .md .hljs-title.function_, .md .hljs-function .hljs-title { color: var(--hl-title); }
+.md .hljs-built_in, .md .hljs-class .hljs-title, .md .hljs-title.class_, .md .hljs-type { color: var(--hl-builtin); }
+.md .hljs-attr, .md .hljs-attribute, .md .hljs-property, .md .hljs-variable, .md .hljs-template-variable { color: var(--hl-attr); }
+.md .hljs-tag, .md .hljs-name, .md .hljs-selector-id, .md .hljs-selector-class, .md .hljs-deletion { color: var(--hl-tag); }
 .md .hljs-meta, .md .hljs-comment-doc { color: var(--dim); }
 .md .hljs-emphasis { font-style: italic; }
 .md .hljs-strong { font-weight: 600; }
@@ -192,6 +228,11 @@ body.dragging { cursor: col-resize; user-select: none; }
 .modal-row + .modal-row { border-top: 1px solid var(--border); }
 .modal-label { font-size: 12.5px; color: var(--dim); min-width: 72px; }
 .modal-row .seg { margin-left: auto; }
+.modal-row.stack { flex-direction: column; align-items: stretch; gap: 9px; }
+.theme-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.theme-opt { font-family: var(--mono); font-size: 11px; padding: 4px 9px; color: var(--mute); background: var(--inset); border: 1px solid var(--border); border-radius: var(--radius); }
+.theme-opt:hover { color: var(--text); border-color: var(--border-strong); }
+.theme-opt.on { color: var(--accent-text); background: var(--accent-soft); border-color: var(--accent); }
 
 /* Skills list (3-line cards: name / description / agent icons) */
 .skill-row { display: flex; flex-direction: column; gap: 5px; padding: 9px 12px; cursor: default; border-left: 2px solid transparent; }

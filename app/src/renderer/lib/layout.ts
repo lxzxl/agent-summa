@@ -1,7 +1,16 @@
 // Layout constants + the persisted (resizable) list-column width.
 
 export const RAIL = 58; // fixed-width icon activity rail (not resizable)
-export const THEMES = ["terminal", "graphite", "spotlight"] as const;
+/** Built-in themes (light first; the first entry is the default). id → `data-theme` value. */
+export const THEMES = [
+  { id: "github-light", label: "GitHub Light" },
+  { id: "solarized-light", label: "Solarized Light" },
+  { id: "catppuccin-latte", label: "Catppuccin Latte" },
+  { id: "terminal", label: "Terminal" },
+  { id: "graphite", label: "Graphite" },
+  { id: "spotlight", label: "Spotlight" },
+] as const;
+export const DEFAULT_THEME = THEMES[0].id; // GitHub Light
 export const COLS_KEY = "asum.cols";
 
 const DEFAULT_COLS = { list: 300 }; // session list intentionally narrow → roomy detail

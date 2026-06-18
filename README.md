@@ -36,6 +36,8 @@ Everything runs on your machine: **no accounts, no servers, no network calls.** 
 
 ![Project memory: instruction-file matrix and learned facts](docs/images/memory.png)
 
+> **Six built-in themes**, light and dark — GitHub Light (default), Solarized Light, Catppuccin Latte, Terminal, Graphite, Spotlight. Switch in Settings. Theming is a CSS-variable contract, so adding a theme is a single set of tokens.
+
 ## Principles
 
 - **Local-first** — reads only the local machine and your own files; zero accounts, servers, or outbound transfer.

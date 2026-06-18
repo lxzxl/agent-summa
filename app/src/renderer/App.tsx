@@ -1,6 +1,6 @@
 import { type MouseEvent as ReactMouseEvent, useEffect, useMemo, useState } from "react";
 import { I18nContext, LOCALES, type Locale, type TFn, loadLocale, makeT } from "./i18n";
-import { COLS_KEY, RAIL, THEMES, loadCols } from "./lib/layout";
+import { COLS_KEY, DEFAULT_THEME, RAIL, THEMES, loadCols } from "./lib/layout";
 import { clamp } from "./lib/format";
 import { Tooltip } from "./components/Tooltip";
 import { SessionsView } from "./views/SessionsView";
@@ -11,7 +11,7 @@ import type { AgentRow, FtsProgress, ScanResult } from "@shared/ipc";
 /** App shell: theme/locale/layout + the activity rail + view routing + the settings modal.
  *  Each view (Sessions/Skills/Agents) is self-contained and owns its own state. */
 export function App(): JSX.Element {
-  const [theme, setTheme] = useState<string>("terminal");
+  const [theme, setTheme] = useState<string>(DEFAULT_THEME);
   const [nav, setNav] = useState<"sessions" | "skills" | "agents">("sessions");
   const [scanInfo, setScanInfo] = useState<ScanResult | null>(null);
   const [agents, setAgents] = useState<AgentRow[]>([]);
@@ -149,12 +149,12 @@ export function App(): JSX.Element {
                   ))}
                 </div>
               </div>
-              <div className="modal-row">
+              <div className="modal-row stack">
                 <span className="modal-label">{t("settings.theme")}</span>
-                <div className="seg">
+                <div className="theme-opts">
                   {THEMES.map((th) => (
-                    <button key={th} className={theme === th ? "on" : ""} onClick={() => setTheme(th)}>
-                      {th}
+                    <button key={th.id} className={`theme-opt${theme === th.id ? " on" : ""}`} onClick={() => setTheme(th.id)}>
+                      {th.label}
                     </button>
                   ))}
                 </div>
