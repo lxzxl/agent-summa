@@ -47,7 +47,7 @@ describe("OhMyPiProvider.readHead", () => {
   it("derives metadata from the header and message stream", () => {
     const h = provider.readHead(file);
     expect(h.sessionId).toBe("019eed3d-f569-7000-bb77-4572c4719cca");
-    expect(h.providerSlug).toBe("oh-my-pi");
+    expect(h.providerSlug).toBe("omp");
     expect(h.title).toBe("Check Project");
     expect(h.titleSource).toBe("ai"); // header titleSource:"auto" → ai
     expect(h.modelName).toBe("anthropic/claude-opus-4-8");
@@ -120,12 +120,12 @@ describe("writeOmpFork", () => {
   it("writes a resumable omp session that round-trips back through the provider", () => {
     const source = provider.read(file);
     const res = writeOmpFork(source, join(dir, "out"));
-    expect(res.targetSlug).toBe("oh-my-pi");
+    expect(res.targetSlug).toBe("omp");
     expect(res.resume).toBe(`omp --resume ${res.sessionId}`);
     expect(res.turns).toBe(5); // fork banner + 4 carried turns
 
     const forked = provider.read(res.path);
-    expect(forked.messages[0].content).toContain("Forked from oh-my-pi");
+    expect(forked.messages[0].content).toContain("Forked from omp");
     expect(forked.messages).toHaveLength(5);
     expect(forked.messages.some((m) => m.content.includes("first prompt"))).toBe(true);
   });

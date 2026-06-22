@@ -423,7 +423,7 @@ function registerIpc(): void {
       } else if (s.targetSlug === "codex") {
         const d = new Date();
         outDir = join(home, ".codex", "sessions", String(d.getFullYear()), pad2(d.getMonth() + 1), pad2(d.getDate()));
-      } else if (s.targetSlug === "oh-my-pi") {
+      } else if (s.targetSlug === "omp") {
         const row = ensureDb().prepare("SELECT workspace FROM sessions WHERE session_path = ?").get(s.sessionPath) as
           | { workspace: string | null }
           | undefined;

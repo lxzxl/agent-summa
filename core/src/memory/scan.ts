@@ -55,7 +55,7 @@ function agentHome(slug: string): string {
       return join(h, ".qwen");
     case "opencode":
       return join(h, ".config", "opencode");
-    case "oh-my-pi":
+    case "omp":
       return process.env.PI_CODING_AGENT_DIR || join(process.env.PI_CONFIG_DIR || join(h, ".omp"), "agent");
     default:
       return join(h, `.${slug}`);
@@ -70,7 +70,7 @@ const GLOBAL_SLOTS: { agent: string; filename: string }[] = [
   { agent: "gemini", filename: "GEMINI.md" },
   { agent: "qwen", filename: "QWEN.md" },
   { agent: "opencode", filename: "AGENTS.md" },
-  { agent: "oh-my-pi", filename: "AGENTS.md" },
+  { agent: "omp", filename: "AGENTS.md" },
 ];
 
 // Project scope: files at the project root. The core four are always shown (so missing ones can be
@@ -82,7 +82,7 @@ interface ProjectSlotSpec {
 }
 const PROJECT_SLOTS: ProjectSlotSpec[] = [
   { rel: "CLAUDE.md", agents: ["claude-code"], always: true },
-  { rel: "AGENTS.md", agents: ["codex", "opencode", "oh-my-pi"], always: true }, // also read by copilot/cursor & oh-my-pi
+  { rel: "AGENTS.md", agents: ["codex", "opencode", "omp"], always: true }, // also read by copilot/cursor & omp
   { rel: "GEMINI.md", agents: ["gemini"], always: true },
   { rel: "QWEN.md", agents: ["qwen"], always: true },
   { rel: ".cursorrules", agents: ["cursor"], always: false },

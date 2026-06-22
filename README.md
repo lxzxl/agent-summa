@@ -2,7 +2,7 @@
 
 > A **local-first desktop app** that unifies the **sessions, skills, and memory** of all your AI coding agents into one searchable place.
 
-If you run more than one CLI coding agent — **Claude Code, Codex, Gemini CLI, Qwen, OpenCode, oh-my-pi, Cursor** — your history is scattered across each tool, with no way to search, resume, or compare across them. agent-summa reads each agent's local session files, indexes them into one library, and lets you **search, resume, and fork across agents** — plus manage the skills and instruction files they share.
+If you run more than one CLI coding agent — **Claude Code, Codex, Gemini CLI, Qwen, OpenCode, omp, Cursor** — your history is scattered across each tool, with no way to search, resume, or compare across them. agent-summa reads each agent's local session files, indexes them into one library, and lets you **search, resume, and fork across agents** — plus manage the skills and instruction files they share.
 
 Everything runs on your machine: **no accounts, no servers, no network calls.** It reads your own local files and never sends anything out.
 
@@ -51,7 +51,7 @@ Everything runs on your machine: **no accounts, no servers, no network calls.** 
 |---|---|---|---|
 | Claude Code (incl. Claude Desktop's CC sessions) | ✅ | ✅ | ✅ |
 | Codex | ✅ | ✅ | ✅ |
-| oh-my-pi (`omp`; incl. legacy `~/.pi` sessions) | ✅ | ✅ | ✅ |
+| omp (oh-my-pi; incl. legacy `~/.pi` sessions) | ✅ | ✅ | ✅ |
 | Gemini CLI | ✅ | ✅ | ✅ |
 | Qwen | ✅ | ✅ | — |
 | OpenCode | ✅ | ✅ | — |

@@ -381,7 +381,7 @@ export function SessionsView({
                         [
                           { slug: "codex", short: "Codex", full: "Codex" },
                           { slug: "claude-code", short: "Claude", full: "Claude Code" },
-                          { slug: "oh-my-pi", short: "oh-my-pi", full: "oh-my-pi" },
+                          { slug: "omp", short: "omp", full: "omp" },
                         ] as const
                       )
                         .filter((tg) => tg.slug !== selected.provider)

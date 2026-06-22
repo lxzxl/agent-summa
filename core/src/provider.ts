@@ -55,7 +55,8 @@ const ALIAS: Record<string, string> = {
   cc: "claude-code",
   "codex-cli": "codex",
   "gemini-cli": "gemini",
-  pi: "oh-my-pi",
+  pi: "omp",
+  "oh-my-pi": "omp",
 };
 
 export class ProviderRegistry {

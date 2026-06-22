@@ -65,8 +65,8 @@ function modelFrom(o: Record<string, any>): string | undefined {
 const INTERRUPT_PREFIX = "[Request interrupted";
 
 export class OhMyPiProvider implements Provider {
-  readonly name = "oh-my-pi";
-  readonly slug = "oh-my-pi";
+  readonly name = "omp";
+  readonly slug = "omp";
   readonly cliAlias = "omp";
 
   detect(): DetectionResult {

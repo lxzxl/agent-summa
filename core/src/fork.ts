@@ -154,13 +154,13 @@ export function writeOmpFork(session: CanonicalSession, outDir: string): ForkRes
     push(m.role === "user" ? "user" : "assistant", text);
   }
   writeFileSync(path, `${lines.join("\n")}\n`);
-  return { targetSlug: "oh-my-pi", path, sessionId: id, resume: `omp --resume ${id}`, turns: lines.length - 1 };
+  return { targetSlug: "omp", path, sessionId: id, resume: `omp --resume ${id}`, turns: lines.length - 1 };
 }
 
 const WRITERS: Record<string, (s: CanonicalSession, out: string) => ForkResult> = {
   "claude-code": writeClaudeFork,
   codex: writeCodexFork,
-  "oh-my-pi": writeOmpFork,
+  omp: writeOmpFork,
 };
 
 /** Fork a source session (read via its owning provider) into a target agent's format. */

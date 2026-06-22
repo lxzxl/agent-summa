@@ -104,6 +104,13 @@ function ensureSchema(db: DB, appVersion: string): void {
   } catch {
     /* column already present */
   }
+  // one-time: the oh-my-pi provider's slug was renamed to `omp` (idempotent; no-op without old rows).
+  try {
+    db.exec("UPDATE sessions SET provider_slug = 'omp' WHERE provider_slug = 'oh-my-pi'");
+    db.exec("UPDATE scan_state SET provider_slug = 'omp' WHERE provider_slug = 'oh-my-pi'");
+  } catch {
+    /* tables not present yet */
+  }
   const row = db.prepare("SELECT schema_version FROM schema_meta WHERE id=1").get() as
     | { schema_version: number }
     | undefined;
