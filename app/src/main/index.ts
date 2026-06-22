@@ -42,7 +42,21 @@ import type {
   SkillRow,
   SubagentsResult,
   TranscriptResult,
+  UpdateInfo,
 } from "@shared/ipc";
+
+// GitHub repo for the update check (owner/name).
+const REPO = "lxzxl/agent-summa";
+
+/** Numeric major.minor.patch compare; ignores any pre-release suffix. */
+function isNewer(latest: string, current: string): boolean {
+  const a = latest.split(".").map((n) => parseInt(n, 10) || 0);
+  const b = current.split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i++) {
+    if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) > (b[i] ?? 0);
+  }
+  return false;
+}
 
 let mainWindow: BrowserWindow | null = null;
 const isMac = process.platform === "darwin";
@@ -396,6 +410,32 @@ function registerIpc(): void {
     if (!cmd || cmd.displayOnly) return { ok: false, command: cmd ? [cmd.program, ...cmd.args].join(" ") : "", launched: false };
     const command = [cmd.program, ...cmd.args].join(" ");
     return { ok: true, command, launched: launchResume(command, cmd.cwd) };
+  });
+
+  // Update check: compare the running version to the latest GitHub release. We surface a download
+  // link rather than auto-installing (the build is unsigned). The app's only outbound call.
+  // Uses the releases/latest *web redirect*, not the REST API: the API's unauthenticated limit
+  // (60/hr per IP) is easily exhausted behind shared/NAT egress IPs, whereas the web endpoint
+  // isn't rate-limited and 302-redirects to the newest tag — so we read the tag from the final URL.
+  ipcMain.handle("checkForUpdate", async (): Promise<UpdateInfo> => {
+    const current = app.getVersion();
+    const releases = `https://github.com/${REPO}/releases`;
+    const fail = (reason: string): UpdateInfo => ({ ok: false, current, latest: null, hasUpdate: false, url: null, reason });
+    try {
+      const res = await fetch(`${releases}/latest`, { redirect: "follow", signal: AbortSignal.timeout(8000) });
+      if (!res.ok) return fail(`HTTP ${res.status}`);
+      const m = /\/releases\/tag\/([^/?#]+)/.exec(res.url);
+      if (!m) return { ok: true, current, latest: null, hasUpdate: false, url: releases }; // no releases published yet
+      const latest = decodeURIComponent(m[1]).replace(/^v/, "");
+      return { ok: true, current, latest, hasUpdate: isNewer(latest, current), url: res.url };
+    } catch (e) {
+      return fail(String(e));
+    }
+  });
+
+  // Open a URL in the default browser (release download page). https only — never other schemes.
+  ipcMain.handle("openExternal", async (_e, url: string): Promise<void> => {
+    if (/^https:\/\//i.test(url)) await shell.openExternal(url);
   });
 
   // The resume command as text (no launch) — for the copy buttons.

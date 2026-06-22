@@ -31,6 +31,7 @@ const DICT: Record<string, Entry> = {
   "settings.language": { en: "Language", zh: "语言" },
   "settings.theme": { en: "Theme", zh: "主题" },
   "settings.close": { en: "Close", zh: "关闭" },
+  "settings.updates": { en: "Updates", zh: "更新" },
 
   // sessions list
   "sessions.search": { en: "Search conversations…", zh: "搜索会话内容…" },
@@ -240,6 +241,14 @@ const DICT: Record<string, Entry> = {
   "statusbar.agents": { en: "{n} agents", zh: "{n} 个 agent" },
   "idx.progress": { en: "Indexing search… {done}/{total}", zh: "正在索引搜索… {done}/{total}" },
   "idx.done": { en: "✓ Search indexed (+{n})", zh: "✓ 搜索已索引（+{n}）" },
+
+  // update check
+  "update.check": { en: "Check for updates", zh: "检查更新" },
+  "update.checking": { en: "Checking…", zh: "检查中…" },
+  "update.upToDate": { en: "Up to date (v{v})", zh: "已是最新（v{v}）" },
+  "update.available": { en: "v{v} available", zh: "有新版本 v{v}" },
+  "update.download": { en: "Download v{v}", zh: "下载 v{v}" },
+  "update.failed": { en: "Couldn't check", zh: "检查失败" },
 };
 
 export type TFn = (key: string, params?: Record<string, string | number>) => string;

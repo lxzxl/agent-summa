@@ -190,6 +190,17 @@ export type FtsProgress =
   | { type: "done"; indexed: number; total: number }
   | { type: "error"; message: string };
 
+// Update check (against GitHub Releases; the app's only outbound call, user-triggered or a quiet
+// launch check). We surface a download link rather than auto-installing (unsigned build).
+export interface UpdateInfo {
+  ok: boolean; // false when the check itself failed (offline / rate-limited / error)
+  current: string; // running app version
+  latest: string | null; // newest published release (tag, "v" stripped)
+  hasUpdate: boolean; // latest > current
+  url: string | null; // release page to open for a manual download
+  reason?: string; // failure detail when !ok
+}
+
 export interface Api {
   scan(): Promise<ScanResult>;
   agents(): Promise<AgentRow[]>;
@@ -215,6 +226,10 @@ export interface Api {
   memoryStoreRead(path: string): Promise<MemoryStoreDetail>;
   projectMemory(project: string | null, workspace: string | null): Promise<ProjectMemory>;
   agentConfig(slug: string): Promise<AgentConfigInfo>;
+  /** Check GitHub Releases for a newer version (compares against the running app version). */
+  checkForUpdate(): Promise<UpdateInfo>;
+  /** Open a URL in the user's default browser (e.g. the release download page). */
+  openExternal(url: string): Promise<void>;
   /** Subscribe to background FTS-indexing progress; returns an unsubscribe fn. */
   onFtsProgress(cb: (p: FtsProgress) => void): () => void;
 }

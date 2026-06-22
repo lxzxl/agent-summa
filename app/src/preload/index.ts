@@ -26,6 +26,8 @@ const api: Api = {
   memoryStoreRead: (path: string) => ipcRenderer.invoke("memoryStoreRead", path),
   projectMemory: (project: string | null, workspace: string | null) => ipcRenderer.invoke("projectMemory", project, workspace),
   agentConfig: (slug: string) => ipcRenderer.invoke("agentConfig", slug),
+  checkForUpdate: () => ipcRenderer.invoke("checkForUpdate"),
+  openExternal: (url: string) => ipcRenderer.invoke("openExternal", url),
   onFtsProgress: (cb: (p: FtsProgress) => void) => {
     const listener = (_e: IpcRendererEvent, p: FtsProgress): void => cb(p);
     ipcRenderer.on("fts:progress", listener);

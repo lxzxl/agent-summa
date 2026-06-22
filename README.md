@@ -4,7 +4,7 @@
 
 If you run more than one CLI coding agent — **Claude Code, Codex, Gemini CLI, Qwen, OpenCode, omp, Cursor** — your history is scattered across each tool, with no way to search, resume, or compare across them. agent-summa reads each agent's local session files, indexes them into one library, and lets you **search, resume, and fork across agents** — plus manage the skills and instruction files they share.
 
-Everything runs on your machine: **no accounts, no servers, no network calls.** It reads your own local files and never sends anything out.
+Everything runs on your machine: **no accounts, no servers.** It reads your own local files and never sends your data out — the only network call is an optional check for app updates against GitHub Releases (no telemetry).
 
 ![agent-summa — one searchable library across all your AI coding agents, with a transcript viewer](docs/images/sessions.png)
 
@@ -40,7 +40,7 @@ Everything runs on your machine: **no accounts, no servers, no network calls.** 
 
 ## Principles
 
-- **Local-first** — reads only the local machine and your own files; zero accounts, servers, or outbound transfer.
+- **Local-first** — reads only the local machine and your own files; no accounts or servers, and your data never leaves the machine. The sole network call is an optional check for app updates against GitHub Releases (which you can run manually; no telemetry).
 - **Read-first, reversible writes** — by default it only indexes and displays. Write operations (fork, skill/instruction distribution) only touch artifacts recorded in agent-summa's own manifest, and back up anything they replace; your original files are left alone.
 - **The index is a disposable cache** — the agents' JSONL files are the source of truth; a corrupt index can be deleted and rebuilt.
 - **Honest about lossy operations** — cross-agent fork is "reopen with context," not a byte-faithful copy, and the UI says so.

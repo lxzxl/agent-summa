@@ -6,7 +6,7 @@ import { Tooltip } from "./components/Tooltip";
 import { SessionsView } from "./views/SessionsView";
 import { SkillsView } from "./views/SkillsView";
 import { AgentsView } from "./views/AgentsView";
-import type { AgentRow, FtsProgress, ScanResult } from "@shared/ipc";
+import type { AgentRow, FtsProgress, ScanResult, UpdateInfo } from "@shared/ipc";
 
 /** App shell: theme/locale/layout + the activity rail + view routing + the settings modal.
  *  Each view (Sessions/Skills/Agents) is self-contained and owns its own state. */
@@ -20,6 +20,8 @@ export function App(): JSX.Element {
   const [locale, setLocale] = useState<Locale>(loadLocale);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fts, setFts] = useState<FtsProgress | null>(null);
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [checking, setChecking] = useState(false);
   const t = useMemo<TFn>(() => makeT(locale), [locale]);
 
   const reloadAgents = (): void => {
@@ -28,6 +30,11 @@ export function App(): JSX.Element {
   function flash(msg: string, ms = 2000): void {
     setToast(msg);
     setTimeout(() => setToast(""), ms);
+  }
+  async function doCheckUpdate(): Promise<void> {
+    setChecking(true);
+    setUpdate(await window.api.checkForUpdate());
+    setChecking(false);
   }
 
   useEffect(() => {
@@ -55,6 +62,12 @@ export function App(): JSX.Element {
       }),
     [],
   );
+  // Quiet update check on launch — only surfaces a notice when a newer release exists.
+  useEffect(() => {
+    window.api.checkForUpdate().then((u) => {
+      if (u.ok && u.hasUpdate) setUpdate(u);
+    });
+  }, []);
 
   // Drag the list↔detail divider: capture width at mousedown, update live until mouseup.
   function startResize(e: ReactMouseEvent): void {
@@ -125,6 +138,18 @@ export function App(): JSX.Element {
           ) : fts && fts.type === "done" && fts.total > 0 ? (
             <span className="idx-status idx-done">{t("idx.done", { n: fts.indexed })}</span>
           ) : null}
+          {update?.ok && update.hasUpdate ? (
+            <span
+              className="idx-status idx-done"
+              style={{ cursor: "pointer" }}
+              data-tip={t("update.download", { v: update.latest ?? "" })}
+              onClick={() => {
+                if (update.url) void window.api.openExternal(update.url);
+              }}
+            >
+              ↑ {t("update.available", { v: update.latest ?? "" })}
+            </span>
+          ) : null}
           <span style={{ marginLeft: "auto" }}>{toast || t("statusbar.agents", { n: agents.length })}</span>
         </div>
 
@@ -157,6 +182,21 @@ export function App(): JSX.Element {
                       {th.label}
                     </button>
                   ))}
+                </div>
+              </div>
+              <div className="modal-row">
+                <span className="modal-label">{t("settings.updates")}</span>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <button className="btn-ghost" disabled={checking} onClick={doCheckUpdate}>
+                    {checking ? t("update.checking") : t("update.check")}
+                  </button>
+                  {!checking && update?.ok && update.hasUpdate ? (
+                    <button className="btn-resume" onClick={() => update.url && void window.api.openExternal(update.url)}>
+                      {t("update.download", { v: update.latest ?? "" })}
+                    </button>
+                  ) : !checking && update ? (
+                    <span style={{ color: "var(--dim)" }}>{update.ok ? t("update.upToDate", { v: update.current }) : t("update.failed")}</span>
+                  ) : null}
                 </div>
               </div>
             </div>
