@@ -1,6 +1,6 @@
 {
   "name": "@agent-summa/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Framework-agnostic core for agent-summa: provider adapters, session index, scanner.",
   "license": "MIT",

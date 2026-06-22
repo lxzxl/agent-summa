@@ -1,6 +1,6 @@
 {
   "name": "agent-summa",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Local-first desktop app that unifies the sessions, skills, and memory of your AI coding agents (Claude Code, Codex, Gemini, Qwen, OpenCode, omp, Cursor) into one searchable place.",
   "license": "MIT",
