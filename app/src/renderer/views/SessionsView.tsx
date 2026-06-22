@@ -377,16 +377,22 @@ export function SessionsView({
                       {t("detail.copyId")}
                     </button>
                     {selected.source !== "vm" &&
-                      (["codex", "claude-code"] as const)
-                        .filter((tg) => tg !== selected.provider)
+                      (
+                        [
+                          { slug: "codex", short: "Codex", full: "Codex" },
+                          { slug: "claude-code", short: "Claude", full: "Claude Code" },
+                          { slug: "oh-my-pi", short: "oh-my-pi", full: "oh-my-pi" },
+                        ] as const
+                      )
+                        .filter((tg) => tg.slug !== selected.provider)
                         .map((tg) => (
                           <button
-                            key={tg}
+                            key={tg.slug}
                             className="btn-ghost btn-fork"
-                            onClick={() => doFork(tg)}
-                            data-tip={t("detail.fork.title", { agent: tg === "codex" ? "Codex" : "Claude Code" })}
+                            onClick={() => doFork(tg.slug)}
+                            data-tip={t("detail.fork.title", { agent: tg.full })}
                           >
-                            {t("detail.fork", { target: tg === "codex" ? "Codex" : "Claude" })}
+                            {t("detail.fork", { target: tg.short })}
                           </button>
                         ))}
                     <div className="seg tabs">

@@ -13,6 +13,11 @@ build/
 prebuilds/
 *.node
 
+# electron-builder packaging resources (app icon, entitlements, …) live in app/build/ —
+# keep them tracked despite the `build/` rule above (that one targets node-gyp output).
+!app/build/
+!app/build/**
+
 # logs
 *.log
 npm-debug.log*

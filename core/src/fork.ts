@@ -108,9 +108,59 @@ export function writeCodexFork(session: CanonicalSession, outDir: string): ForkR
   return { targetSlug: "codex", path, sessionId: id, resume: `codex resume ${id}`, turns: lines.length - 1 };
 }
 
+/** Write the carried context as a resumable oh-my-pi (omp) session JSONL. */
+export function writeOmpFork(session: CanonicalSession, outDir: string): ForkResult {
+  const id = randomUUID();
+  mkdirSync(outDir, { recursive: true });
+  const now = new Date();
+  // omp session filename: ISO timestamp with `:`/`.` rewritten to `-`, then `_<id>.jsonl`.
+  const path = join(outDir, `${now.toISOString().replace(/[:.]/g, "-")}_${id}.jsonl`);
+  const cwd = session.workspace ?? process.cwd();
+  const lines: string[] = [
+    JSON.stringify({
+      type: "session",
+      version: 3,
+      id,
+      timestamp: now.toISOString(),
+      cwd,
+      title: session.title ?? "Forked session",
+      titleSource: "auto",
+      parentSession: session.sessionId,
+    }),
+  ];
+  let parent: string | null = null;
+  // Stamp entries on a monotonic clock from fork time so the banner stays first when the new
+  // session replays in chronological order (carried turns' original timestamps are irrelevant).
+  const base = now.getTime();
+  let seq = 0;
+  const push = (role: "user" | "assistant", text: string): void => {
+    const eid = randomUUID().replace(/-/g, "").slice(0, 8);
+    const stamp = base + seq++;
+    lines.push(
+      JSON.stringify({
+        type: "message",
+        id: eid,
+        parentId: parent,
+        timestamp: new Date(stamp).toISOString(),
+        message: { role, content: [{ type: "text", text }], attribution: role === "user" ? "user" : "agent", timestamp: stamp },
+      }),
+    );
+    parent = eid;
+  };
+  push("user", forkBanner(session));
+  for (const m of session.messages) {
+    const text = messageText(m);
+    if (!text) continue;
+    push(m.role === "user" ? "user" : "assistant", text);
+  }
+  writeFileSync(path, `${lines.join("\n")}\n`);
+  return { targetSlug: "oh-my-pi", path, sessionId: id, resume: `omp --resume ${id}`, turns: lines.length - 1 };
+}
+
 const WRITERS: Record<string, (s: CanonicalSession, out: string) => ForkResult> = {
   "claude-code": writeClaudeFork,
   codex: writeCodexFork,
+  "oh-my-pi": writeOmpFork,
 };
 
 /** Fork a source session (read via its owning provider) into a target agent's format. */

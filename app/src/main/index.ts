@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { existsSync, lstatSync, readFileSync, readlinkSync, statSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join, relative } from "node:path";
 import {
   applyDesktopOverlay,
   applyOpencodeOverlay,
@@ -52,6 +52,14 @@ let db: DB | undefined;
 function ensureDb(): DB {
   if (!db) db = openDb(join(app.getPath("userData"), "index.db"), app.getVersion());
   return db;
+}
+
+/** Encode a cwd to oh-my-pi's session subdir: home-relative `-a-b-c` (bare `-` for home), else legacy `--abs--`. */
+function ompEncodeDir(home: string, cwd: string): string {
+  const rel = relative(home, cwd);
+  if (rel === "") return "-";
+  if (!rel.startsWith("..") && !isAbsolute(rel)) return `-${rel.replace(/[/\\:]/g, "-")}`;
+  return `--${cwd.replace(/^[/\\]+/, "").replace(/[/\\:]/g, "-")}--`;
 }
 
 function runScan(): ScanResult {
@@ -415,6 +423,13 @@ function registerIpc(): void {
       } else if (s.targetSlug === "codex") {
         const d = new Date();
         outDir = join(home, ".codex", "sessions", String(d.getFullYear()), pad2(d.getMonth() + 1), pad2(d.getDate()));
+      } else if (s.targetSlug === "oh-my-pi") {
+        const row = ensureDb().prepare("SELECT workspace FROM sessions WHERE session_path = ?").get(s.sessionPath) as
+          | { workspace: string | null }
+          | undefined;
+        const cwd = row?.workspace ?? home;
+        const agentDir = process.env.PI_CODING_AGENT_DIR || join(process.env.PI_CONFIG_DIR || join(home, ".omp"), "agent");
+        outDir = join(agentDir, "sessions", ompEncodeDir(home, cwd));
       } else {
         return { error: `unknown fork target: ${s.targetSlug}` };
       }
@@ -495,6 +510,9 @@ function registerIpc(): void {
 }
 
 function createWindow(): void {
+  const iconPath = join(app.getAppPath(), "build", "icon.png");
+  const hasDevIcon = existsSync(iconPath); // dev only; packaged builds use the electron-builder bundle icon
+  if (isMac && hasDevIcon) app.dock?.setIcon(iconPath);
   const win = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -503,6 +521,7 @@ function createWindow(): void {
     show: false,
     title: "agent-summa",
     backgroundColor: "#08090A",
+    ...(hasDevIcon && !isMac && { icon: iconPath }),
     ...(isMac && { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 16, y: 14 }, roundedCorners: true }),
     ...(isWin && { titleBarStyle: "hidden" as const, titleBarOverlay: { color: "#0C0D0F", symbolColor: "#8B989B", height: 38 } }),
     webPreferences: {
