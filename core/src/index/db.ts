@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS session_tags (
 function applyPragmas(db: DB): void {
   db.pragma("journal_mode = WAL");
   db.pragma("synchronous = NORMAL");
-  db.pragma("busy_timeout = 5000");
+  db.pragma("busy_timeout = 10000");
   db.pragma("foreign_keys = ON");
   db.pragma("temp_store = MEMORY");
 }

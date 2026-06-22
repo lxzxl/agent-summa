@@ -6,7 +6,7 @@
 // it's never re-read; empty (rounds=0) sessions are skipped outright. Runs fully synchronously here
 // because blocking *this* process is fine — that's the whole point of moving it off-main.
 import { statSync } from "node:fs";
-import { builtinRegistry, indexSession, openDb, rebuildFts } from "@agent-summa/core";
+import { builtinRegistry, indexSession, openDb } from "@agent-summa/core";
 import type { FtsProgress } from "@shared/ipc";
 
 const MAX_FTS_BYTES = 64 * 1024 * 1024; // skip the read for pathologically large sessions
@@ -36,7 +36,6 @@ function run(): void {
   post({ type: "start", total });
   let indexed = 0;
   let done = 0;
-  let dirty = false;
   for (const r of rows) {
     const p = reg.bySlug(r.provider_slug);
     let tooBig = false;
@@ -47,8 +46,7 @@ function run(): void {
     }
     if (p?.read && !tooBig) {
       try {
-        indexSession(db, p.read(r.session_path));
-        dirty = true;
+        indexSession(db, p.read(r.session_path)); // keeps message_fts in sync incrementally
         indexed++;
       } catch {
         /* unreadable / parse error — still marked done so it isn't retried every launch */
@@ -56,10 +54,8 @@ function run(): void {
     }
     markDone.run(r.session_path);
     done++;
-    if (indexed > 0 && indexed % 40 === 0) rebuildFts(db); // make search progressively usable
     if (done % 5 === 0 || done === total) post({ type: "progress", done, total });
   }
-  if (dirty) rebuildFts(db);
   db.close();
   post({ type: "done", indexed, total });
 }

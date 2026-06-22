@@ -3,13 +3,29 @@ import type { DB } from "./db";
 
 /** Replace this session's message_entries with its parsed transcript. Returns rows written. */
 export function indexSession(db: DB, session: CanonicalSession): number {
+  // Keep the external-content FTS index in sync incrementally — never a full 'rebuild' (which
+  // re-tokenizes the whole table and holds a long write lock that starves concurrent writers,
+  // e.g. the main process's scan → "database is locked"). For an external-content FTS5 table the
+  // 'delete' command must be given the rows' currently-indexed values, so remove the old terms
+  // *before* deleting the content rows, then re-add terms after inserting the new rows.
+  const ftsDelete = db.prepare(`
+    INSERT INTO message_fts(message_fts, rowid, session_path, role, source_type, search_text)
+      SELECT 'delete', rowid_pk, session_path, role, source_type, search_text
+      FROM message_entries WHERE session_path = ?
+  `);
   const del = db.prepare("DELETE FROM message_entries WHERE session_path = ?");
   const ins = db.prepare(`
     INSERT INTO message_entries
       (session_path, idx, native_id, role, source_type, content, search_text, timestamp, is_sidechain)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
+  const ftsInsert = db.prepare(`
+    INSERT INTO message_fts(rowid, session_path, role, source_type, search_text)
+      SELECT rowid_pk, session_path, role, source_type, search_text
+      FROM message_entries WHERE session_path = ?
+  `);
   const tx = db.transaction(() => {
+    ftsDelete.run(session.sourcePath);
     del.run(session.sourcePath);
     let n = 0;
     for (const m of session.messages) {
@@ -29,6 +45,7 @@ export function indexSession(db: DB, session: CanonicalSession): number {
       );
       n++;
     }
+    ftsInsert.run(session.sourcePath);
     return n;
   });
   return tx() as number;
