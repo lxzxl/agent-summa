@@ -1,29 +1,50 @@
 name: release
 
-# Build the desktop app on each OS and attach the installers to the GitHub release for the tag.
-# Triggers on a v* tag push; workflow_dispatch lets you run it manually (publishes against the
-# version in package.json). Builds are UNSIGNED (no Apple/Windows cert) — see the release notes
-# for the macOS first-launch step.
+# Build the desktop app per-OS and attach the installers to the GitHub release for the tag.
+# Fires on a v* tag push (builds all platforms), or manually via workflow_dispatch with a platform
+# selector (handy for backfilling one OS). Builds are UNSIGNED (no Apple/Windows cert) — see the
+# release notes for the macOS first-launch step.
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      platforms:
+        description: Which OSes to build & publish
+        type: choice
+        default: all
+        options: [all, win-linux, mac, win, linux]
 
 permissions:
   contents: write # create/update the release and upload assets
 
 jobs:
+  # Resolve the build matrix from the dispatch input (tag pushes always build all three).
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        shell: bash
+        run: |
+          mac='{"os":"macos-14","target":"--mac"}'
+          win='{"os":"windows-latest","target":"--win"}'
+          lin='{"os":"ubuntu-latest","target":"--linux"}'
+          case "${{ github.event.inputs.platforms || 'all' }}" in
+            mac)       inc="$mac" ;;
+            win)       inc="$win" ;;
+            linux)     inc="$lin" ;;
+            win-linux) inc="$win,$lin" ;;
+            *)         inc="$mac,$win,$lin" ;;
+          esac
+          echo "matrix={\"include\":[$inc]}" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: setup
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: macos-14 # Apple Silicon → arm64 .dmg
-            target: "--mac"
-          - os: windows-latest # → NSIS .exe
-            target: "--win"
-          - os: ubuntu-latest # → AppImage
-            target: "--linux"
+      matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

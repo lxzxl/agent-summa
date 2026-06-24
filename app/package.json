@@ -45,6 +45,7 @@
     "files": ["out/**/*", "package.json"],
     "asarUnpack": ["**/*.node", "node_modules/better-sqlite3/**"],
     "npmRebuild": false,
+    "publish": { "provider": "github", "owner": "lxzxl", "repo": "agent-summa" },
     "mac": {
       "target": [{ "target": "dmg", "arch": ["arm64"] }],
       "category": "public.app-category.developer-tools",
