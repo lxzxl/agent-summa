@@ -69,7 +69,9 @@ jobs:
       - run: pnpm --filter @agent-summa/app rebuild:native # better-sqlite3 → this runner's Electron ABI
       - run: pnpm --filter @agent-summa/app build # electron-vite → out/
       - name: Package
-        run: pnpm --filter @agent-summa/app exec electron-builder ${{ matrix.target }}
+        # --publish never: just build the installer; uploading is done by the gh step below.
+        # (electron-builder auto-publishes on CI when a publish config is present, which we don't want.)
+        run: pnpm --filter @agent-summa/app exec electron-builder ${{ matrix.target }} --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false" # no signing cert — produce an unsigned build
           APPIMAGE_EXTRACT_AND_RUN: "1" # build AppImage without requiring FUSE on the runner
