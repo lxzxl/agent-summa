@@ -1,9 +1,12 @@
 name: release
 
-# Build the desktop app per-OS and attach the installers to the GitHub release for the tag.
-# Fires on a v* tag push (builds all platforms), or manually via workflow_dispatch with a platform
-# selector (handy for backfilling one OS). Builds are UNSIGNED (no Apple/Windows cert) — see the
-# release notes for the macOS first-launch step.
+# Build the desktop app per-OS and attach the installers to the GitHub release for the version
+# in package.json (tag = v<version>). Fires on a v* tag push (all platforms) or manually via
+# workflow_dispatch with a platform selector (handy for backfilling one OS). Builds are UNSIGNED
+# (no Apple/Windows cert) — see the release notes for the macOS first-launch step.
+#
+# We build with electron-builder but upload with `gh release upload` rather than electron-builder's
+# own publisher: the latter only manages draft releases and silently skips an already-published one.
 on:
   push:
     tags: ["v*"]
@@ -19,12 +22,14 @@ permissions:
   contents: write # create/update the release and upload assets
 
 jobs:
-  # Resolve the build matrix from the dispatch input (tag pushes always build all three).
+  # Resolve the build matrix from the dispatch input (tag pushes build all three) and make sure the
+  # target release exists so the build jobs have something to upload to.
   setup:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.m.outputs.matrix }}
     steps:
+      - uses: actions/checkout@v4
       - id: m
         shell: bash
         run: |
@@ -39,6 +44,13 @@ jobs:
             *)         inc="$mac,$win,$lin" ;;
           esac
           echo "matrix={\"include\":[$inc]}" >> "$GITHUB_OUTPUT"
+      - name: Ensure the release exists
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v$(node -p "require('./app/package.json').version")"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "agent-summa $TAG" --generate-notes --verify-tag
 
   build:
     needs: setup
@@ -55,10 +67,17 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @agent-summa/app rebuild:native # better-sqlite3 → this runner's Electron ABI
-      - run: pnpm --filter @agent-summa/app build
-      - name: Package + publish to the release
-        run: pnpm --filter @agent-summa/app exec electron-builder ${{ matrix.target }} --publish always
+      - run: pnpm --filter @agent-summa/app build # electron-vite → out/
+      - name: Package
+        run: pnpm --filter @agent-summa/app exec electron-builder ${{ matrix.target }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: "false" # no signing cert — produce an unsigned build
           APPIMAGE_EXTRACT_AND_RUN: "1" # build AppImage without requiring FUSE on the runner
+      - name: Upload installers to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v$(node -p "require('./app/package.json').version")"
+          find app/release -maxdepth 1 -type f \( -name '*.dmg' -o -name '*.exe' -o -name '*.AppImage' \) \
+            -print -exec gh release upload "$TAG" {} --clobber \;
