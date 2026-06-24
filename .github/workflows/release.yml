@@ -1,0 +1,43 @@
+name: release
+
+# Build the desktop app on each OS and attach the installers to the GitHub release for the tag.
+# Triggers on a v* tag push; workflow_dispatch lets you run it manually (publishes against the
+# version in package.json). Builds are UNSIGNED (no Apple/Windows cert) — see the release notes
+# for the macOS first-launch step.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write # create/update the release and upload assets
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14 # Apple Silicon → arm64 .dmg
+            target: "--mac"
+          - os: windows-latest # → NSIS .exe
+            target: "--win"
+          - os: ubuntu-latest # → AppImage
+            target: "--linux"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @agent-summa/app rebuild:native # better-sqlite3 → this runner's Electron ABI
+      - run: pnpm --filter @agent-summa/app build
+      - name: Package + publish to the release
+        run: pnpm --filter @agent-summa/app exec electron-builder ${{ matrix.target }} --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false" # no signing cert — produce an unsigned build
+          APPIMAGE_EXTRACT_AND_RUN: "1" # build AppImage without requiring FUSE on the runner
