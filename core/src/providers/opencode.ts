@@ -203,29 +203,44 @@ function readHeadOn(db: OcDb, id: string): SessionHead {
 
 /**
  * Index every opencode session into the cross-agent index. opencode is db-backed (no per-session
- * file), so the file scanner can't reach it — we mirror the claude-desktop overlay: clear + reinsert.
+ * file), so the file scanner can't reach it. We *upsert* (not clear+reinsert) so an unchanged
+ * session keeps its `fts_indexed` flag — otherwise the message-content FTS worker would re-read and
+ * re-index every opencode session on every launch. `fts_indexed` is reset (→ re-index) only when the
+ * session actually changed (its `ended_at` = opencode's `time_updated` differs). Deleted sessions
+ * are reconciled out at the end.
  */
 export function applyOpencodeOverlay(db: DB): { sessions: number } {
   const oc = openRO();
-  if (!oc) return { sessions: 0 };
+  if (!oc) {
+    db.prepare("DELETE FROM sessions WHERE provider_slug = 'opencode'").run(); // opencode gone → drop its rows
+    return { sessions: 0 };
+  }
   const nowIso = new Date().toISOString();
   const upsert = db.prepare(`
-    INSERT OR REPLACE INTO sessions
+    INSERT INTO sessions
       (session_path, session_id, provider_slug, source, workspace, project_root, title, title_source,
        last_prompt, summary, model_name, rounds, message_count, started_at, ended_at,
        input_tokens, output_tokens, cli_session_id, metadata_json, indexed_at)
     VALUES (@sessionPath, @sessionId, 'opencode', 'db-backed', @workspace, @projectRoot, @title, @titleSource,
        NULL, NULL, @model, @rounds, @messageCount, @startedAt, @endedAt,
        @inputTokens, @outputTokens, NULL, @metadataJson, @indexedAt)
+    ON CONFLICT(session_path) DO UPDATE SET
+      session_id = excluded.session_id, workspace = excluded.workspace, project_root = excluded.project_root,
+      title = excluded.title, title_source = excluded.title_source, model_name = excluded.model_name,
+      rounds = excluded.rounds, message_count = excluded.message_count, started_at = excluded.started_at,
+      ended_at = excluded.ended_at, input_tokens = excluded.input_tokens, output_tokens = excluded.output_tokens,
+      metadata_json = excluded.metadata_json, indexed_at = excluded.indexed_at,
+      fts_indexed = CASE WHEN sessions.ended_at IS NOT excluded.ended_at THEN NULL ELSE sessions.fts_indexed END
   `);
-  const clear = db.prepare("DELETE FROM sessions WHERE provider_slug = 'opencode'");
   let sessions = 0;
   try {
     const rows = oc.prepare(`SELECT ${SESSION_COLS} FROM session`).all() as OcSession[];
     const mc = oc.prepare("SELECT COUNT(*) n FROM message WHERE session_id = ?");
     const uc = oc.prepare("SELECT COUNT(*) n FROM message WHERE session_id = ? AND json_extract(data, '$.role') = 'user'");
+    const existing = db.prepare("SELECT session_path FROM sessions WHERE provider_slug = 'opencode'");
+    const del = db.prepare("DELETE FROM sessions WHERE session_path = ?");
+    const keep = new Set<string>();
     const tx = db.transaction(() => {
-      clear.run();
       for (const r of rows) {
         const h = headFromRow(r, (mc.get(r.id) as { n: number }).n, (uc.get(r.id) as { n: number }).n);
         upsert.run({
@@ -245,7 +260,11 @@ export function applyOpencodeOverlay(db: DB): { sessions: number } {
           metadataJson: JSON.stringify(h.metadata ?? {}),
           indexedAt: nowIso,
         });
+        keep.add(h.sourcePath);
         sessions++;
+      }
+      for (const e of existing.all() as { session_path: string }[]) {
+        if (!keep.has(e.session_path)) del.run(e.session_path);
       }
     });
     tx();
