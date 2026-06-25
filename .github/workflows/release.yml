@@ -75,6 +75,25 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false" # no signing cert — produce an unsigned build
           APPIMAGE_EXTRACT_AND_RUN: "1" # build AppImage without requiring FUSE on the runner
+      # CI has no Developer ID cert, so electron-builder leaves the .app unsigned → a downloaded .dmg
+      # is blocked as "damaged". Ad-hoc sign the .app (codesign -s -) and rebuild the .dmg from it,
+      # which downgrades that to the milder "unidentified developer" (right-click Open / Open Anyway).
+      # Real signing + notarization still needs an Apple Developer cert.
+      - name: Ad-hoc sign + repackage the macOS app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          APP=$(ls -d app/release/mac*/*.app | head -1)
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --deep --strict "$APP" && echo "ad-hoc signed: $APP"
+          VER=$(node -p "require('./app/package.json').version")
+          STAGE=$(mktemp -d)
+          ditto "$APP" "$STAGE/agent-summa.app"
+          ln -s /Applications "$STAGE/Applications"
+          DMG="app/release/agent-summa-${VER}-arm64.dmg"
+          rm -f "$DMG" "${DMG}.blockmap"
+          hdiutil create -volname "agent-summa ${VER}" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+          rm -rf "$STAGE"
       - name: Upload installers to the release
         shell: bash
         env:
