@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { basename, join } from "node:path";
+import { basename, isAbsolute, join, relative } from "node:path";
 import {
   flattenContent,
   normalizeRole,
@@ -24,10 +24,18 @@ import { gitRoot, home, readAllRecords, walkFiles } from "../util";
 // separate `toolResult` message (role:"toolResult") with `toolCallId` + `toolName` + content blocks.
 
 /** Current omp agent dir, honoring the same env overrides omp itself uses. */
-function ompAgentDir(): string {
+export function ompAgentDir(): string {
   if (process.env.PI_CODING_AGENT_DIR) return process.env.PI_CODING_AGENT_DIR;
   const cfg = process.env.PI_CONFIG_DIR || join(home(), ".omp");
   return join(cfg, "agent");
+}
+
+/** Encode a cwd to oh-my-pi's session subdir: home-relative `-a-b-c` (bare `-` for home), else legacy `--abs--`. */
+export function encodeOmpDir(homeDir: string, cwd: string): string {
+  const rel = relative(homeDir, cwd);
+  if (rel === "") return "-";
+  if (!rel.startsWith("..") && !isAbsolute(rel)) return `-${rel.replace(/[/\\:]/g, "-")}`;
+  return `--${cwd.replace(/^[/\\]+/, "").replace(/[/\\:]/g, "-")}--`;
 }
 
 // Top-level session files are `<timestamp>_<sessionId>.jsonl`. Subagent transcripts

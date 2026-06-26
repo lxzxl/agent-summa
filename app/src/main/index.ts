@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { existsSync, lstatSync, readFileSync, readlinkSync, statSync } from "node:fs";
-import { dirname, isAbsolute, join, relative } from "node:path";
+import { dirname, join } from "node:path";
 import {
   applyDesktopOverlay,
   applyOpencodeOverlay,
@@ -14,6 +14,7 @@ import {
   unlinkContext,
   type DistTarget,
   fork,
+  forkOutputDir,
   type ForkResult,
   listSubagents,
   openDb,
@@ -68,14 +69,6 @@ let db: DB | undefined;
 function ensureDb(): DB {
   if (!db) db = openDb(join(app.getPath("userData"), "index.db"), app.getVersion());
   return db;
-}
-
-/** Encode a cwd to oh-my-pi's session subdir: home-relative `-a-b-c` (bare `-` for home), else legacy `--abs--`. */
-function ompEncodeDir(home: string, cwd: string): string {
-  const rel = relative(home, cwd);
-  if (rel === "") return "-";
-  if (!rel.startsWith("..") && !isAbsolute(rel)) return `-${rel.replace(/[/\\:]/g, "-")}`;
-  return `--${cwd.replace(/^[/\\]+/, "").replace(/[/\\:]/g, "-")}--`;
 }
 
 function runScan(): ScanResult {
@@ -455,27 +448,12 @@ function registerIpc(): void {
   ipcMain.handle("fork", (_e, s: { sessionPath: string; targetSlug: string }): ForkResult | { error: string } => {
     try {
       const home = app.getPath("home");
-      const pad2 = (n: number): string => String(n).padStart(2, "0");
-      let outDir: string;
-      if (s.targetSlug === "claude-code") {
-        const row = ensureDb().prepare("SELECT workspace FROM sessions WHERE session_path = ?").get(s.sessionPath) as
-          | { workspace: string | null }
-          | undefined;
-        const cwd = row?.workspace ?? home; // Claude Code locates a resume by the cwd-encoded project dir
-        outDir = join(home, ".claude", "projects", cwd.replace(/[^a-zA-Z0-9]/g, "-"));
-      } else if (s.targetSlug === "codex") {
-        const d = new Date();
-        outDir = join(home, ".codex", "sessions", String(d.getFullYear()), pad2(d.getMonth() + 1), pad2(d.getDate()));
-      } else if (s.targetSlug === "omp") {
-        const row = ensureDb().prepare("SELECT workspace FROM sessions WHERE session_path = ?").get(s.sessionPath) as
-          | { workspace: string | null }
-          | undefined;
-        const cwd = row?.workspace ?? home;
-        const agentDir = process.env.PI_CODING_AGENT_DIR || join(process.env.PI_CONFIG_DIR || join(home, ".omp"), "agent");
-        outDir = join(agentDir, "sessions", ompEncodeDir(home, cwd));
-      } else {
-        return { error: `unknown fork target: ${s.targetSlug}` };
-      }
+      const row = ensureDb().prepare("SELECT workspace FROM sessions WHERE session_path = ?").get(s.sessionPath) as
+        | { workspace: string | null }
+        | undefined;
+      const cwd = row?.workspace ?? home; // the target store is keyed by the source's cwd
+      const outDir = forkOutputDir(s.targetSlug, home, cwd);
+      if (!outDir) return { error: `unknown fork target: ${s.targetSlug}` };
       const res = fork(builtinRegistry(), s.sessionPath, s.targetSlug, outDir);
       runScan();
       return res;

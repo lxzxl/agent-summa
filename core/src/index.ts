@@ -5,7 +5,7 @@ export { openDb, type DB } from "./index/db";
 export { scan, type ScanStats } from "./index/scanner";
 export { indexSession, rebuildFts, searchMessages, type SearchHit } from "./index/messages";
 export { sessionStatus, type SessionStatus, type StatusInput, type FsProbe } from "./index/status";
-export { fork, type ForkResult } from "./fork";
+export { fork, forkOutputDir, type ForkResult } from "./fork";
 export { scanSkills, skillRoots, parseFrontmatter, type SkillEntry } from "./skills/scan";
 export { distributeSkills, spreadSkill, removeSkillDir, uninstallSkills, type Manifest, type DistTarget } from "./skills/distribute";
 export { applyDesktopOverlay, readDesktopCatalog, type DesktopEntry } from "./providers/claude-desktop";

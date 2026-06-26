@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { CanonicalMessage, CanonicalSession } from "./model";
 import type { ProviderRegistry } from "./provider";
+import { encodeOmpDir, ompAgentDir } from "./providers/oh-my-pi";
 
 export interface ForkResult {
   targetSlug: string;
@@ -155,6 +156,22 @@ export function writeOmpFork(session: CanonicalSession, outDir: string): ForkRes
   }
   writeFileSync(path, `${lines.join("\n")}\n`);
   return { targetSlug: "omp", path, sessionId: id, resume: `omp --resume ${id}`, turns: lines.length - 1 };
+}
+
+/** Where a fork of `slug` must land so the target agent's `resume` finds it (null = not a fork
+ *  target). `cwd` is the source session's workspace; `now` dates the codex day-dir. */
+export function forkOutputDir(slug: string, homeDir: string, cwd: string, now: Date = new Date()): string | null {
+  const pad2 = (n: number): string => String(n).padStart(2, "0");
+  switch (slug) {
+    case "claude-code":
+      return join(homeDir, ".claude", "projects", cwd.replace(/[^a-zA-Z0-9]/g, "-"));
+    case "codex":
+      return join(homeDir, ".codex", "sessions", String(now.getFullYear()), pad2(now.getMonth() + 1), pad2(now.getDate()));
+    case "omp":
+      return join(ompAgentDir(), "sessions", encodeOmpDir(homeDir, cwd));
+    default:
+      return null;
+  }
 }
 
 const WRITERS: Record<string, (s: CanonicalSession, out: string) => ForkResult> = {
