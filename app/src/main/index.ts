@@ -21,6 +21,8 @@ import {
   scan,
   scanSkills,
   searchMessages,
+  sessionStatus,
+  type FsProbe,
   skillRoots,
   spreadSkill,
   uninstallSkills,
@@ -133,28 +135,25 @@ function querySessions(opts: SessionQuery): SessionRow[] {
     )
     .all(...params) as Array<Record<string, any>>;
   const now = Date.now();
-  const wsExists = new Map<string, boolean>(); // dedupe existsSync across shared project dirs
-  const statusOf = (r: Record<string, any>, meta: { interrupted?: boolean }): string | null => {
-    if (r.source === "vm") return null; // already flagged by the vm🔒 pill
-    // active: written within the last minute (a live CLI/agent run). Only stat recent files.
-    if (r.ended_at && now - r.ended_at < 3_600_000) {
-      try {
-        if (now - statSync(r.session_path).mtimeMs < 60_000) return "active";
-      } catch {
-        /* file vanished — fall through */
-      }
-    }
-    if (meta.interrupted) return "interrupted"; // session ended on a user abort (parsed at index time)
-    if (r.rounds === 0) return "empty";
-    if (r.workspace) {
-      let ok = wsExists.get(r.workspace);
+  // Real fs probe for the status rule: dedupe existsSync across sessions sharing a workspace,
+  // and treat a non-file sourcePath (e.g. db-backed `opencode:<id>`) as having no mtime.
+  const wsExists = new Map<string, boolean>();
+  const probe: FsProbe = {
+    exists: (dir) => {
+      let ok = wsExists.get(dir);
       if (ok === undefined) {
-        ok = existsSync(r.workspace);
-        wsExists.set(r.workspace, ok);
+        ok = existsSync(dir);
+        wsExists.set(dir, ok);
       }
-      if (!ok) return "orphaned";
-    }
-    return null;
+      return ok;
+    },
+    mtimeMs: (path) => {
+      try {
+        return statSync(path).mtimeMs;
+      } catch {
+        return null;
+      }
+    },
   };
   return rows.map((r) => {
     let meta: { interrupted?: boolean; subagents?: number; workflows?: number } = {};
@@ -176,7 +175,11 @@ function querySessions(opts: SessionQuery): SessionRow[] {
       rounds: r.rounds,
       startedAt: r.started_at,
       endedAt: r.ended_at,
-      status: statusOf(r, meta),
+      status: sessionStatus(
+        { source: r.source, endedAt: r.ended_at, rounds: r.rounds, workspace: r.workspace, sourcePath: r.session_path, interrupted: !!meta.interrupted },
+        now,
+        probe,
+      ),
       subagents: meta.subagents ?? 0,
       workflows: meta.workflows ?? 0,
     };
